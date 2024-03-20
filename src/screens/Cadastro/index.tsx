@@ -76,7 +76,6 @@ const schemaRegister = yup.object({
 });
 
 export default function Cadastro() {
-  const [cepResult, setCepResult] = useState<CepModel | null>();
   const [modalVisible, setModalVisible] = React.useState(false);
   const [valueRadio, setValueRadio] = React.useState("one");
   const [bancos, setBancos] = React.useState<BancoModel[]>([]);
@@ -109,10 +108,11 @@ export default function Cadastro() {
   const handleBancoSearch = async () => {
     try {
       const result = await fetchBanco(getValues("banco"));
-      if (result) {
-        console.log(result);
+      if (result && result.length !== 0) {
         setBancos(result);
         setModalVisible(true);
+      } else {
+        alert("Não foi encontrados bancos com esse nome");
       }
     } catch (e: any) {
       console.error("Error fetching data:", e);
