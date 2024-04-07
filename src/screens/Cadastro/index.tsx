@@ -1,6 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-import { TouchableOpacity, ScrollView, Text } from "react-native";
+import {
+  TouchableOpacity,
+  ScrollView,
+  Text,
+  ActivityIndicator,
+} from "react-native";
 import {
   Stack,
   Button,
@@ -17,15 +22,22 @@ import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useForm, Controller } from "react-hook-form";
+import uuid from "react-native-uuid";
+import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
+import { RootTabParamList } from "../../router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Toast from "react-native-tiny-toast";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
-import CepModel from "../../models/Cep";
+import BancoModel from "../../models/Banco";
+import fetchBanco from "../../controllers/BancoContoller";
 import fetchCep from "../../controllers/CepController";
 import { Input } from "../../components/Input";
-import fetchBanco from "../../controllers/BancoContoller";
-import BancoModel from "../../models/Banco";
+import { ExcluirItemDialog } from "../../components/Dialog";
+import { styles } from "./styles";
 
 interface FormDataProps {
-  id: any;
+  id: string;
   primeiroNome: string;
   segundoNome: string;
   email: string;
@@ -74,22 +86,50 @@ const schemaRegister = yup.object({
     .required("O banco é obrigatório")
     .min(3, "Informe no minimo 3 digitos"),
 });
+type CadastroRouterProp = BottomTabScreenProps<RootTabParamList, "Cadastro">;
 
-export default function Cadastro() {
-  const [modalVisible, setModalVisible] = React.useState(false);
-  const [valueRadio, setValueRadio] = React.useState("one");
+export default function Cadastro({ route, navigation }: CadastroRouterProp) {
+  const isEditing = !!route?.params?.id;
+
+  const [loading, setLoading] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [searcherID, setSearcherID] = useState(false);
+
+  const [modalVisible, setModalVisible] = React.useState(false); //Modal de escolha dos bancos.
+  const [valueRadio, setValueRadio] = React.useState("one"); //value do Radio button na escolha do banco.
   const [bancos, setBancos] = React.useState<BancoModel[]>([]);
+
   const {
     control,
     handleSubmit,
     formState: { errors },
     setValue,
     getValues,
+    reset,
   } = useForm<FormDataProps>({
     resolver: yupResolver(schemaRegister) as any,
   });
 
-  const onSubmit = (data: any) => console.log(data);
+  useEffect(() => {
+    if (isEditing) {
+      handlerSearcher(route.params.id);
+      setSearcherID(true);
+    } else {
+      setSearcherID(false);
+      reset();
+      setLoading(false);
+    }
+    return () => setLoading(true);
+  }, [route, isEditing]);
+
+  useEffect(() => {
+    if (route?.params?.id) handlerSearcher(route?.params?.id);
+    else {
+      reset();
+      setLoading(false);
+    }
+    return () => setLoading(true);
+  }, [route]);
 
   const handleCepSearch = async () => {
     try {
@@ -99,6 +139,8 @@ export default function Cadastro() {
         setValue("bairro", result?.bairro);
         setValue("cidade", result?.localidade);
         setValue("uf", result?.uf);
+      } else {
+        alert("CEP não encontrado");
       }
     } catch (e: any) {
       console.error("Error fetching data:", e);
@@ -119,8 +161,115 @@ export default function Cadastro() {
     }
   };
 
+  async function handlerSearcher(id: string) {
+    try {
+      setLoading(true);
+      const responseData = await AsyncStorage.getItem("@fromHook:cadastro");
+      const dbData: FormDataProps[] = responseData
+        ? JSON.parse(responseData)
+        : [];
+
+      const itemEncontrado = dbData?.find((item) => item.id === id);
+
+      if (itemEncontrado) {
+        Object.keys(itemEncontrado).forEach((key) =>
+          setValue(
+            key as keyof FormDataProps,
+            itemEncontrado?.[key as keyof FormDataProps] as string
+          )
+        );
+        setSearcherID(true);
+      }
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+    }
+  }
+
+  async function handleDelete(data: FormDataProps) {
+    try {
+      setLoading(true);
+      const responseData = await AsyncStorage.getItem("@fromHook:cadastro");
+      const dbData: FormDataProps[] = responseData
+        ? JSON.parse(responseData)
+        : [];
+
+      const indexToRemove = dbData.findIndex((item) => item.id === data.id);
+
+      if (indexToRemove !== -1) {
+        dbData.splice(indexToRemove, 1);
+        await AsyncStorage.setItem(
+          "@fromHook:cadastro",
+          JSON.stringify(dbData)
+        );
+        Toast.showSuccess("Registro excluido com sucesso");
+        setShowDeleteDialog(false);
+        setSearcherID(false);
+        reset();
+        navigation.navigate("Contas");
+      } else {
+        Toast.show("Registro não localizado!");
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async function handlerAlterRegister(data: FormDataProps) {
+    try {
+      setLoading(true);
+      const responseData = await AsyncStorage.getItem("@fromHook:cadastro");
+      const dbData: FormDataProps[] = responseData
+        ? JSON.parse(responseData)
+        : [];
+
+      const indexToRemove = dbData.findIndex((item) => item.id === data.id);
+
+      if (indexToRemove !== -1) {
+        dbData.splice(indexToRemove, 1);
+        const previewData = [...dbData, data];
+        await AsyncStorage.setItem(
+          "@fromHook:cadastro",
+          JSON.stringify(previewData)
+        );
+        Toast.showSuccess("Cadastro alterado com sucesso");
+        setLoading(false);
+        setSearcherID(false);
+        reset();
+
+        navigation.navigate("Contas");
+      } else {
+        Toast.show("Registro não localizado!");
+      }
+    } catch (err) {
+      setLoading(false);
+      console.log(err);
+    }
+  }
+
+  if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
+
+  async function handlerRegister(data: FormDataProps) {
+    data.id = uuid.v4().toString();
+    try {
+      const responseData = await AsyncStorage.getItem("@fromHook:cadastro");
+      const dbData = responseData ? JSON.parse(responseData) : [];
+      const previewData = [...dbData, data];
+
+      await AsyncStorage.setItem(
+        "@fromHook:cadastro",
+        JSON.stringify(previewData)
+      );
+      Toast.showSuccess("Cadastro realizado com sucesso");
+      reset();
+      navigation.navigate("Contas");
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   return (
-    <ScrollView style={{ backgroundColor: "white" }}>
+    <KeyboardAwareScrollView style={styles.container}>
       <Modal
         isOpen={modalVisible}
         onClose={() => setModalVisible(false)}
@@ -160,7 +309,7 @@ export default function Cadastro() {
                 setValue("banco", valueRadio);
               }}
             >
-              User este banco
+              Use este banco
             </Button>
           </Modal.Footer>
         </Modal.Content>
@@ -168,7 +317,6 @@ export default function Cadastro() {
       <Center>
         <Heading my={5}>Cadastro de Usuários</Heading>
       </Center>
-
       <Stack
         space={3}
         w="100%"
@@ -371,18 +519,47 @@ export default function Cadastro() {
             />
           )}
         />
-
-        <HStack space={3} my={3}>
-          <Button
-            style={{ flex: 1 }}
-            colorScheme="secondary"
-            onPress={handleSubmit(onSubmit)}
-          >
-            Salvar
-          </Button>
-          <Button style={{ flex: 1 }}>Cancelar</Button>
-        </HStack>
+        {searcherID ? (
+          <HStack space={3} my={3}>
+            <Button
+              style={{ flex: 1 }}
+              colorScheme="secondary"
+              onPress={handleSubmit(handlerAlterRegister)}
+            >
+              Alterar
+            </Button>
+            <Button
+              style={{ flex: 1 }}
+              onPress={() => setShowDeleteDialog(true)}
+            >
+              Excluir
+            </Button>
+          </HStack>
+        ) : (
+          <HStack space={3} my={3}>
+            <Button
+              style={{ flex: 1 }}
+              colorScheme="secondary"
+              onPress={handleSubmit(handlerRegister)}
+            >
+              Salvar
+            </Button>
+            <Button style={{ flex: 1 }} onPress={() => reset()}>
+              Cancelar
+            </Button>
+          </HStack>
+        )}
+        <Modal
+          isOpen={showDeleteDialog}
+          onClose={() => setShowDeleteDialog(false)}
+        >
+          <ExcluirItemDialog
+            isVisible={showDeleteDialog}
+            onCancel={() => setShowDeleteDialog(false)}
+            onConfirm={handleSubmit(handleDelete)}
+          />
+        </Modal>
       </Stack>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }

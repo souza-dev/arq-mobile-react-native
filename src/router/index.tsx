@@ -1,16 +1,13 @@
 import React from "react";
-import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
-import {
-  createBottomTabNavigator,
-  BottomTabBarProps,
-} from "@react-navigation/bottom-tabs";
+import { DefaultTheme } from "@react-navigation/native";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import Cadastro from "../screens/Cadastro";
 import Contas from "../screens/Contas";
 
 export type RootTabParamList = {
-  Cadastro: undefined;
+  Cadastro: { id: string };
   Contas: undefined;
 };
 
