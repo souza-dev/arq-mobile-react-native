@@ -123,8 +123,9 @@ export default function Cadastro({ route, navigation }: CadastroRouterProp) {
   }, [route, isEditing]);
 
   useEffect(() => {
-    if (route?.params?.id) handlerSearcher(route?.params?.id);
-    else {
+    if (route?.params?.id) {
+      handlerSearcher(route?.params?.id);
+    } else {
       reset();
       setLoading(false);
     }
@@ -544,7 +545,13 @@ export default function Cadastro({ route, navigation }: CadastroRouterProp) {
             >
               Salvar
             </Button>
-            <Button style={{ flex: 1 }} onPress={() => reset()}>
+            <Button
+              style={{ flex: 1 }}
+              onPress={() => {
+                setSearcherID(false);
+                reset();
+              }}
+            >
               Cancelar
             </Button>
           </HStack>

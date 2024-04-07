@@ -26,6 +26,11 @@ export const Routes = () => {
   return (
     <Tab.Navigator>
       <Tab.Screen
+        listeners={({ navigation }) => ({
+          focus: () => {
+            navigation.setParams({ id: undefined });
+          },
+        })}
         name="Cadastro"
         component={Cadastro}
         options={{
