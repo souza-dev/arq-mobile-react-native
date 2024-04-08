@@ -269,12 +269,9 @@ export default function Cadastro({ route, navigation }: CadastroRouterProp) {
     }
   }
 
-  const handleCepChange = (inputText) => {
-    // Remover caracteres não numéricos
+  const handleCepChange = (inputText: string) => {
     const numericValue = inputText.replace(/\D/g, "");
-
-    // Aplicar máscara para o CEP
-    let formattedCep = numericValue.substr(0, 8); // Limita a 8 dígitos
+    let formattedCep = numericValue.slice(0, 8);
     if (formattedCep.length > 5) {
       formattedCep = formattedCep.replace(/(\d{5})(\d)/, "$1-$2");
     }
