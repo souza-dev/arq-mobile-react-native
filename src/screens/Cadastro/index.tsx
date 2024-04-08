@@ -275,7 +275,6 @@ export default function Cadastro({ route, navigation }: CadastroRouterProp) {
     if (formattedCep.length > 5) {
       formattedCep = formattedCep.replace(/(\d{5})(\d)/, "$1-$2");
     }
-
     return formattedCep;
   };
 
@@ -379,6 +378,8 @@ export default function Cadastro({ route, navigation }: CadastroRouterProp) {
           render={({ field: { onChange, onBlur, value } }) => (
             <Input
               size="xl"
+              autoCapitalize="none"
+              keyboardType="email-address"
               placeholder="Email"
               onBlur={onBlur}
               onChangeText={onChange}
@@ -396,6 +397,7 @@ export default function Cadastro({ route, navigation }: CadastroRouterProp) {
           name="cep"
           render={({ field: { onChange, onBlur, value } }) => (
             <Input
+              keyboardType="numeric"
               size="xl"
               placeholder="Cep"
               onBlur={onBlur}
