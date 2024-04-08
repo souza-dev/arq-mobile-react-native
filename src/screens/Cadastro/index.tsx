@@ -24,11 +24,11 @@ import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useForm, Controller } from "react-hook-form";
 import uuid from "react-native-uuid";
 import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
-import { RootTabParamList } from "../../router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-tiny-toast";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
+import { RootTabParamList } from "../../router";
 import BancoModel from "../../models/Banco";
 import fetchBanco from "../../controllers/BancoContoller";
 import fetchCep from "../../controllers/CepController";
@@ -269,6 +269,19 @@ export default function Cadastro({ route, navigation }: CadastroRouterProp) {
     }
   }
 
+  const handleCepChange = (inputText) => {
+    // Remover caracteres não numéricos
+    const numericValue = inputText.replace(/\D/g, "");
+
+    // Aplicar máscara para o CEP
+    let formattedCep = numericValue.substr(0, 8); // Limita a 8 dígitos
+    if (formattedCep.length > 5) {
+      formattedCep = formattedCep.replace(/(\d{5})(\d)/, "$1-$2");
+    }
+
+    return formattedCep;
+  };
+
   return (
     <KeyboardAwareScrollView style={styles.container}>
       <Modal
@@ -389,7 +402,7 @@ export default function Cadastro({ route, navigation }: CadastroRouterProp) {
               size="xl"
               placeholder="Cep"
               onBlur={onBlur}
-              onChangeText={onChange}
+              onChangeText={(text) => onChange(handleCepChange(text))}
               value={value}
               errorMessage={errors.cep?.message}
               InputLeftElement={<Icon as={MaterialIcons} name="map" mx={2} />}
