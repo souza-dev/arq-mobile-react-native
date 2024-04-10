@@ -44,6 +44,7 @@ export default function Contas({ navigation }: Props) {
       item?.rua.toLowerCase().includes(search.toLowerCase()) ||
       item?.bairro.toLowerCase().includes(search.toLowerCase()) ||
       item?.cidade.toLowerCase().includes(search.toLowerCase()) ||
+      item?.uf.toLowerCase().includes(search.toLowerCase()) ||
       item?.banco.toLowerCase().includes(search.toLowerCase())
   );
 
