@@ -36,8 +36,15 @@ export default function Contas({ navigation }: Props) {
     }
   }
 
-  const dadosFiltrados = data.filter((item: CadastroProps) =>
-    item?.primeiroNome.toLowerCase().includes(search.toLowerCase())
+  const dadosFiltrados = data.filter(
+    (item: CadastroProps) =>
+      item?.primeiroNome.toLowerCase().includes(search.toLowerCase()) ||
+      item?.segundoNome.toLowerCase().includes(search.toLowerCase()) ||
+      item?.email.toLowerCase().includes(search.toLowerCase()) ||
+      item?.rua.toLowerCase().includes(search.toLowerCase()) ||
+      item?.bairro.toLowerCase().includes(search.toLowerCase()) ||
+      item?.cidade.toLowerCase().includes(search.toLowerCase()) ||
+      item?.banco.toLowerCase().includes(search.toLowerCase())
   );
 
   const renderItem = ({ item }: { item: CadastroProps }) => {
