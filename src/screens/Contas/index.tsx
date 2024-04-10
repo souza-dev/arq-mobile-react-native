@@ -1,8 +1,9 @@
 import React, { useCallback, useState } from "react";
-import { View, FlatList } from "react-native";
+import { View, FlatList, TouchableOpacity } from "react-native";
 import Card, { CadastroProps } from "../../components/Card/Card";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
+import { SearchIcon, Input } from "native-base";
 
 import { styles } from "./styles";
 
@@ -12,6 +13,7 @@ interface Props {
 
 export default function Contas({ navigation }: Props) {
   const [data, setData] = useState<CadastroProps[]>([]);
+  const [search, setSearch] = useState("");
 
   function handleEdit(id: any) {
     navigation.navigate("Cadastro", { id: id });
@@ -34,14 +36,30 @@ export default function Contas({ navigation }: Props) {
     }
   }
 
+  const dadosFiltrados = data.filter((item: CadastroProps) =>
+    item?.primeiroNome.toLowerCase().includes(search.toLowerCase())
+  );
+
   const renderItem = ({ item }: { item: CadastroProps }) => {
     return <Card data={item} onPress={() => handleEdit(item.id)} />;
   };
 
   return (
     <View style={styles.container}>
+      <Input
+        value={search}
+        size="xl"
+        placeholder="Busca"
+        onChangeText={setSearch}
+        InputRightElement={
+          <TouchableOpacity style={{ marginEnd: 10 }}>
+            <SearchIcon size="5" my={2} />
+          </TouchableOpacity>
+        }
+      />
+
       <FlatList
-        data={data}
+        data={dadosFiltrados}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
       />
